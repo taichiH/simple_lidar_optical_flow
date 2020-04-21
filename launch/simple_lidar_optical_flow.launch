@@ -1,0 +1,59 @@
+<launch>
+  <arg name="input_cloud" default="/points_raw" />
+  <arg name="image_size" default="400" />
+  <arg name="point_radius" default="10" />
+
+  <arg name="lk_flow" default="false"/>
+  <arg name="simple_flow" default="true"/>
+
+  <node name="lidar_to_image"
+        pkg="simple_lidar_optical_flow" type="lidar_to_image"
+        output="screen">
+    <remap from="~input_cloud" to="$(arg input_cloud)" />
+    <rosparam subst_value="true">
+      image_width: $(arg image_size)
+      image_height: $(arg image_size)
+      point_radius: $(arg point_radius)
+      z_max: 0
+      z_min: -2
+    </rosparam>
+  </node>
+
+  <node name="optical_flow"
+        pkg="opencv_apps" type="lk_flow"
+        output="screen" if="$(arg lk_flow)">
+    <remap from="image" to="lidar_to_image/output_gray" />
+    <rosparam subst_value="true">
+      debug_view: true
+    </rosparam>
+  </node>
+
+  <node name="optical_flow"
+        pkg="opencv_apps" type="simple_flow"
+        output="log" if="$(arg simple_flow)">
+    <remap from="image" to="lidar_to_image/output_gray" />
+    <rosparam subst_value="true">
+      debug_view: false
+      scale: 2
+    </rosparam>
+  </node>
+
+  <node name="flow_viewer"
+        pkg="simple_lidar_optical_flow" type="flow_viewer"
+        output="screen">
+    <remap from="~input_flow" to="optical_flow/flows" />
+    <remap from="~input_image" to="lidar_to_image/output_gray" />
+    <rosparam subst_value="true">
+      image_width: $(arg image_size)
+      image_height: $(arg image_size)
+      point_radius: $(arg point_radius)
+      z_max: 0
+      z_min: -2
+      vel_thresh: 1
+    </rosparam>
+  </node>
+
+
+
+
+</launch>
